@@ -8,6 +8,7 @@ import com.example.kata.domain.model.ReleveCompte;
 import com.example.kata.ports.in.CompteLecture;
 import com.example.kata.ports.in.CompteTransaction;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -25,15 +26,25 @@ public class CompteController {
    private CompteLecture compteLecture;
 
     @PostMapping("/{numeroCompte}/depot")
-    public void deposer(@PathVariable String numeroCompte,
-                        @RequestBody OperationDto operationDto) {
-        compteTransaction.deposer(numeroCompte, operationDto.getMontant());
+    public ResponseEntity<String> deposer(@PathVariable String numeroCompte,
+                                          @RequestBody OperationDto operationDto) {
+        try {
+            compteTransaction.deposer(numeroCompte, operationDto.getMontant());
+            return ResponseEntity.ok("dépôt bien effectué");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PostMapping("/{numeroCompte}/retrait")
-    public void retirer(@PathVariable String numeroCompte,
+    public ResponseEntity<String> retirer(@PathVariable String numeroCompte,
                         @RequestBody OperationDto operationDto) {
-        compteTransaction.retirer(numeroCompte, operationDto.getMontant());
+        try {
+            compteTransaction.retirer(numeroCompte, operationDto.getMontant());
+            return ResponseEntity.ok("retrait bien effectué");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/{numeroCompte}/releve")
@@ -43,12 +54,21 @@ public class CompteController {
     }
 
     @PostMapping("/courant")
-    public void creerCompteCourant(@RequestBody CreerCompteCourantDto creerCompteCourantDto) {
-        compteTransaction.creerCompteCourant(creerCompteCourantDto);
-    }
+    public ResponseEntity<String> creerCompteCourant(@RequestBody CreerCompteCourantDto creerCompteCourantDto) {
+        try {
+            compteTransaction.creerCompteCourant(creerCompteCourantDto);
+            return ResponseEntity.ok("compte courant bien crée");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }    }
 
     @PostMapping("/livret")
-    public void creerLivret(@RequestBody CreerLivretDto creerLivretDto) {
-        compteTransaction.creerLivret(creerLivretDto);
+    public ResponseEntity<String> creerLivret(@RequestBody CreerLivretDto creerLivretDto) {
+        try {
+            compteTransaction.creerLivret(creerLivretDto);
+            return ResponseEntity.ok("livret bien crée");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

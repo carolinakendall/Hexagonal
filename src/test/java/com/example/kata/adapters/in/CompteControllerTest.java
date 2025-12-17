@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -42,9 +44,27 @@ class CompteControllerTest {
         OperationDto dto = new OperationDto();
         dto.setMontant(50);
 
-        compteController.retirer(numeroCompte, dto);
+        ResponseEntity<String> response = compteController.retirer(numeroCompte, dto);
 
         verify(compteTransaction, times(1)).retirer(numeroCompte, 50);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().contains("retrait bien effectué"));
+
+    }
+
+    @Test
+    void testRetirerCasNonPassant() {
+        String numeroCompte = "123";
+        OperationDto dto = new OperationDto();
+        dto.setMontant(-50);
+
+        doThrow(new IllegalArgumentException("le montant à retirer doit être positif"))
+                .when(compteTransaction).retirer(numeroCompte, -50);
+
+        ResponseEntity<String> response = compteController.retirer(numeroCompte, dto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody().contains("le montant à retirer doit être positif"));
     }
 
     @Test
@@ -72,17 +92,50 @@ class CompteControllerTest {
     void testCreerCompteCourantCasPassant() {
         CreerCompteCourantDto dto = new CreerCompteCourantDto();
 
-        compteController.creerCompteCourant(dto);
+        ResponseEntity<String> response = compteController.creerCompteCourant(dto);
 
         verify(compteTransaction, times(1)).creerCompteCourant(dto);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().contains("compte courant bien crée"));
     }
+
+    @Test
+    void testCreerCompteCourantCasNonPassant() {
+        CreerCompteCourantDto dto = new CreerCompteCourantDto();
+        dto.setNumeroCompte("456");
+
+        doThrow(new IllegalArgumentException("Numéro de compte déjà existant"))
+                .when(compteTransaction).creerCompteCourant(dto);
+
+        ResponseEntity<String> response = compteController.creerCompteCourant(dto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody().contains("Numéro de compte déjà existant"));
+    }
+
 
     @Test
     void testCreerLivretCasPassant() {
         CreerLivretDto dto = new CreerLivretDto();
 
-        compteController.creerLivret(dto);
+        ResponseEntity<String> response = compteController.creerLivret(dto);
 
         verify(compteTransaction, times(1)).creerLivret(dto);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().contains("livret bien crée"));
+    }
+
+    @Test
+    void testCreerLivretCasNonPassant() {
+        CreerLivretDto dto = new CreerLivretDto();
+        dto.setNumeroCompte("789");
+
+        doThrow(new IllegalStateException("Plafond déjà atteint"))
+                .when(compteTransaction).creerLivret(dto);
+
+        ResponseEntity<String> response = compteController.creerLivret(dto);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertTrue(response.getBody().contains("Plafond déjà atteint"));
     }
 }
